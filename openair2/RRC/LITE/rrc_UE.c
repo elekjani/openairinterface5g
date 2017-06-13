@@ -1908,10 +1908,16 @@ rrc_ue_process_rrcConnectionReconfiguration(
           pdu_length = rrcConnectionReconfiguration_r8->dedicatedInfoNASList->list.array[list_count]->size;
           pdu_buffer = rrcConnectionReconfiguration_r8->dedicatedInfoNASList->list.array[list_count]->buf;
 
-          msg_p = itti_alloc_new_message(TASK_RRC_UE, NAS_CONN_ESTABLI_CNF);
-          NAS_CONN_ESTABLI_CNF(msg_p).errCode = AS_SUCCESS;
-          NAS_CONN_ESTABLI_CNF(msg_p).nasMsg.length = pdu_length;
-          NAS_CONN_ESTABLI_CNF(msg_p).nasMsg.data = pdu_buffer;
+          if(*(pdu_buffer + 6) == 0x62) {
+            msg_p = itti_alloc_new_message(TASK_RRC_UE, NAS_DOWNLINK_DATA_IND);
+            NAS_DOWNLINK_DATA_IND(msg_p).nasMsg.length = pdu_length;
+            NAS_DOWNLINK_DATA_IND(msg_p).nasMsg.data = pdu_buffer;
+          } else {
+            msg_p = itti_alloc_new_message(TASK_RRC_UE, NAS_CONN_ESTABLI_CNF);
+            NAS_CONN_ESTABLI_CNF(msg_p).errCode = AS_SUCCESS;
+            NAS_CONN_ESTABLI_CNF(msg_p).nasMsg.length = pdu_length;
+            NAS_CONN_ESTABLI_CNF(msg_p).nasMsg.data = pdu_buffer;
+          }
 
           itti_send_msg_to_task(TASK_NAS_UE, ctxt_pP->instance, msg_p);
         }
